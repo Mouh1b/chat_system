@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="messages">
+
+    </div>
+
+
+    <script>
+        const body=[];
+
+        async function getChat(){
+            const url="/message/";
+            var diff=0;
+            try{
+                response=await fetch(url);
+                if (!response.ok){
+                    throw new Error(`response status: ${response.status}`);
+                }
+                const json=await response.json();
+                 diff=json.length-body.length;
+                
+                for(let i=1;i<=diff;i++){
+                    console.log(json[body.length])
+                    body.push(json[body.length])
+                    
+                }
+                
+                
+            }
+            catch(error){
+                console.error(error.message)
+            }
+            
+        }
+         const intervalId=setInterval(getChat,1000)
+    </script>
+</body>
+</html>

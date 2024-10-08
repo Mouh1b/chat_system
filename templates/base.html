@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My App{% endblock %}</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Helper function to get cookie value by name
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        // Function to get the expiration time of the access token
+        function getAccessTokenExpiration() {
+            const token = getCookie('access_token');
+            if (!token) {
+                return null;
+            }
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.exp * 1000; // Convert to milliseconds
+        }
+
+        // Function to check if the token is about to expire
+        function checkTokenExpiration() {
+            
+            const expirationTime = getAccessTokenExpiration();
+            
+            if (!expirationTime) {
+                return;
+            }
+
+            const now = new Date().getTime();
+            const timeUntilExpiration = expirationTime - now;
+            console.log(timeUntilExpiration/1000);
+            // Show the popup 2 minutes before the token expires
+            if (timeUntilExpiration < 1 * 60 * 1000 && timeUntilExpiration>0) {
+                showSessionPopup();
+            }
+            if(timeUntilExpiration<=0){
+                document.getElementById('sessionPopup').style.display = 'none';
+            }
+        }
+
+        // Function to show session expiration popup
+        function showSessionPopup() {
+            document.getElementById('sessionPopup').style.display = 'block';
+            console.log('Popup shown');
+        }
+
+        // Function to refresh the token when the button is clicked
+        function refreshToken() {
+            // AJAX request to refresh the token
+            $.ajax({
+                url: '/api/token/refresh/',  // The URL for the token refresh endpoint
+                method: 'POST',
+                success: function() {
+                    // Token refresh was successful
+                    console.log('Token refreshed successfully!');
+                    document.getElementById('sessionPopup').style.display = 'none'; // Hide the popup
+                },
+                error: function() {
+                    // Token refresh failed
+                    console.log('Token refresh failed!');
+                }
+            });
+        }
+
+        // Set up a check to run every minute to check token expiration
+         // Run every 1 minute
+        setInterval(checkTokenExpiration, 1 * 1000); // Run every 1 minute
+    </script>
+
+    <style>
+        /* Simple styling for the popup */
+        #sessionPopup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 1px solid black;
+            padding: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sessionPopup">
+        <h1>Your session is about to expire!</h1>
+        <button id="refreshTokenButton">Extend Session</button>
+    </div>
+    {% block content %}
+
+    {% endblock %}
+
+    <script>
+        // Add event listener to the button to trigger the token refresh
+        document.getElementById('refreshTokenButton').addEventListener('click', function() {
+            refreshToken();
+        });
+    </script>
+
+</body>
+</html>
